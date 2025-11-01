@@ -18,14 +18,37 @@ class PosController extends Controller
     public function selectCaller($number)
     {
         session(['call_number' => $number]);
-        return redirect()->route('pos.products', ['order' => $number]);
+        return redirect()->route('pos.categories');
     }
 
-
-    public function showProducts()
+    public function selectCategory()
     {
         $callNumber = session('call_number');
-        $products = Product::all();
+
+        if (!$callNumber) {
+            return redirect()->route('pos.index')->with('error', 'Seleccione un llamador primero.');
+        }
+
+        // Definimos las categorías
+        $categories = [
+            1 => '🍔 Hamburguesas',
+            2 => '🥫 Salsas',
+            3 => '🥤 Bebidas',
+            4 => '🍟 Fries',
+        ];
+
+        return view('pos.categories', compact('categories', 'callNumber'));
+    }
+    public function showProducts($id_category)
+    {
+        $callNumber = session('call_number');
+
+        // Productos filtrados por categoría elegida (por ejemplo category_id = 1)
+        $products = Product::where('category', $id_category)->get();
+
+        // Agregados (category_id = 5)
+        $extras = Product::where('category', 5)->get();
+
         $cart = Cart::where('call_number', $callNumber)->get();
 
         $staticIngredients = [
@@ -41,8 +64,9 @@ class PosController extends Controller
             'Pepinillos'
         ];
 
-        return view('pos.products', compact('products', 'cart', 'callNumber', 'staticIngredients'));
+        return view('pos.products', compact('products', 'extras', 'cart', 'callNumber', 'staticIngredients'));
     }
+
 
     public function addToCart(Request $request)
     {

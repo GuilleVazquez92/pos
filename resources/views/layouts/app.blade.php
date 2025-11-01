@@ -12,6 +12,8 @@
         <a class="navbar-brand" href="{{ route('dashboard') }}">Panel</a>
         <div>
             <a class="btn btn-outline-light me-2" href="{{ route('products.index') }}">Productos</a>
+            <a class="btn btn-outline-light me-2" href="{{ route('pos.index') }}">POS</a>
+
             {{-- <a class="btn btn-outline-light me-2" href="{{ route('clientes.index') }}">Clientes</a> --}}
         </div>
     </div>
