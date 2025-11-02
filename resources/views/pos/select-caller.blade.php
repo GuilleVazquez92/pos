@@ -1,17 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Seleccionar Llamador</h2>
+<div class="max-w-6xl mx-auto p-6">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Seleccionar Llamador</h2>
 
-    <div class="row">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         @for ($i = 1; $i <= 17; $i++)
-            <div class="col-6 col-md-3 col-lg-2 mb-3">
-                <a href="{{ route('pos.caller', $i) }}" 
-                   class="btn btn-primary w-100 py-4 fw-bold">
-                     {{ $i }}
-                </a>
-            </div>
+            <a href="{{ route('pos.caller', $i) }}"
+               class="block bg-red-500 text-black font-bold text-xl rounded-xl py-8 text-center
+                      hover:bg-red-600 hover:shadow-lg transition transform hover:scale-105">
+                {{ $i }}
+            </a>
         @endfor
     </div>
 </div>

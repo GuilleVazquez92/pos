@@ -29,6 +29,8 @@ class PosController extends Controller
             return redirect()->route('pos.index')->with('error', 'Seleccione un llamador primero.');
         }
 
+         $cart = Cart::all();
+
         // Definimos las categorías
         $categories = [
             1 => '🍔 Hamburguesas',
@@ -37,7 +39,7 @@ class PosController extends Controller
             4 => '🍟 Fries',
         ];
 
-        return view('pos.categories', compact('categories', 'callNumber'));
+        return view('pos.categories', compact('categories', 'callNumber', 'cart'));
     }
     public function showProducts($id_category)
     {
@@ -49,7 +51,7 @@ class PosController extends Controller
         // Agregados (category_id = 5)
         $extras = Product::where('category', 5)->get();
 
-        $cart = Cart::where('call_number', $callNumber)->get();
+        $cart = Cart::all();
 
         $staticIngredients = [
             'Salsa',
@@ -68,9 +70,8 @@ class PosController extends Controller
     }
 
 
-    public function addToCart(Request $request)
+    public function addToCart(Request $request, $callNumber)
     {
-        $callNumber = session('call_number');
         $product = Product::findOrFail($request->product_id);
 
         Cart::create([
@@ -87,6 +88,7 @@ class PosController extends Controller
 
         return back()->with('success', 'Producto agregado al carrito.');
     }
+
 
     public function checkout()
     {
@@ -136,5 +138,14 @@ class PosController extends Controller
         Cart::where('call_number', $callNumber)->delete();
 
         return redirect()->route('pos.index')->with('success', 'Pedido cobrado y enviado a cocina.');
+    }
+
+    public function customize($callNumber, $productId)
+    {
+        $product = Product::findOrFail($productId);
+        $extras = Product::where('category', 5)->get();
+        $staticIngredients = ['Queso', 'Lechuga', 'Tomate']; // ejemplo
+
+        return view('pos.customize', compact('callNumber', 'product', 'extras', 'staticIngredients'));
     }
 }

@@ -1,31 +1,54 @@
 @extends('layouts.app')
 
 @section('content')
-<h2 class="mb-4">Editar Producto</h2>
+<div class="max-w-2xl mx-auto bg-white shadow rounded-lg p-6">
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Editar Producto</h2>
 
-<form action="{{ route('products.update', $product) }}" method="POST" class="card p-4 shadow-sm">
-    @csrf
-    @method('PUT')
+    <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-5">
+        @csrf
+        @method('PUT')
 
-    <div class="mb-3">
-        <label for="name" class="form-label">Nombre del producto</label>
-        <input type="text" name="name" id="name" class="form-control" 
-               value="{{ old('name', $product->name) }}" required>
-    </div>
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                Nombre del producto
+            </label>
+            <input type="text" name="name" id="name" 
+                   value="{{ old('name', $product->name) }}"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   required>
+        </div>
 
-    <div class="mb-3">
-        <label for="price" class="form-label">Precio</label>
-        <input type="number" name="price" id="price" class="form-control" 
-               value="{{ old('price', $product->price) }}" required>
-    </div>
+        <div>
+            <label for="price" class="block text-sm font-medium text-gray-700 mb-1">
+                Precio
+            </label>
+            <input type="number" name="price" id="price"
+                   value="{{ old('price', $product->price) }}"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   required>
+        </div>
 
-    <div class="mb-3">
-        <label for="stock" class="form-label">Stock</label>
-        <input type="number" name="stock" id="stock" class="form-control" 
-               value="{{ old('stock', $product->stock) }}" required>
-    </div>
+        <div>
+            <label for="stock" class="block text-sm font-medium text-gray-700 mb-1">
+                Stock
+            </label>
+            <input type="number" name="stock" id="stock"
+                   value="{{ old('stock', $product->stock) }}"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   required>
+        </div>
 
-    <button type="submit" class="btn btn-success">Actualizar</button>
-    <a href="{{ route('products.index') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+        <div class="flex items-center gap-3 pt-2">
+            <button type="submit" 
+                    class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition">
+                Actualizar
+            </button>
+
+            <a href="{{ route('products.index') }}" 
+               class="bg-gray-300 text-gray-800 px-5 py-2 rounded-lg hover:bg-gray-400 transition">
+               Cancelar
+            </a>
+        </div>
+    </form>
+</div>
 @endsection

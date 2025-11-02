@@ -26,6 +26,8 @@
 
         Route::post('/order/{order}/add-product', [PosController::class, 'addProduct'])->name('addProduct');
         Route::post('/order/{order}/update-total', [PosController::class, 'updateTotal'])->name('updateTotal');
-        Route::post('/order/{order}/checkout', [PosController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout', [PosController::class, 'checkout'])->name('checkout');
         Route::post('/caller/{callNumber}/add-to-cart', [PosController::class, 'addToCart'])->name('addToCart');
+        Route::get('/{callNumber}/customize/{product}', [PosController::class, 'customize'])
+            ->name('customize');
     });
