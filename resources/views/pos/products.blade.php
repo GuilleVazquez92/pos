@@ -23,20 +23,36 @@
         @if($cart->isEmpty())
             <p class="text-gray-500">No hay productos en el carrito.</p>
         @else
+            @php
+                $total = 0;
+            @endphp
+
             <ul class="divide-y divide-gray-200 mb-4">
                 @foreach($cart as $item)
+                    @php
+                        $extras = json_decode($item->added, true) ?? [];
+                        $extrasTotal = collect($extras)->sum('price');
+                        $subtotal = $item->price + $extrasTotal;
+                        $total += $subtotal;
+                    @endphp
+
+                    {{-- Producto principal --}}
                     <li class="flex justify-between py-2">
                         <span>{{ $item->name }}</span>
                         <span>₲{{ number_format($item->price, 0, ',', '.') }}</span>
                     </li>
-                    @if($item->added)
+
+                    {{-- Extras agregados --}}
+                    @if(!empty($extras))
                         <li class="flex flex-col pl-4 text-green-700 text-sm">
-                            Extras: 
-                            @foreach(json_decode($item->added) as $extra)
-                                <span>- {{ $extra }}</span>
+                            Agregado:
+                            @foreach($extras as $extra)
+                                <span>- {{ $extra['name'] }} (₲{{ number_format($extra['price'], 0, ',', '.') }})</span>
                             @endforeach
                         </li>
                     @endif
+
+                    {{-- Quitados --}}
                     @if($item->removed)
                         <li class="flex flex-col pl-4 text-red-700 text-sm">
                             Quitado: 
@@ -45,12 +61,19 @@
                             @endforeach
                         </li>
                     @endif
+
+                    {{-- Subtotal del producto --}}
+                    <li class="pl-4 text-gray-600 text-sm flex justify-between">
+                        <span class="font-semibold">Subtotal:</span>
+                        <span>₲{{ number_format($subtotal, 0, ',', '.') }}</span>
+                    </li>
                 @endforeach
             </ul>
 
-            <div class="font-bold mb-4 flex justify-between">
+            {{-- Total general --}}
+            <div class="font-bold mb-4 flex justify-between text-lg">
                 <span>Total:</span>
-                <span>₲{{ number_format($cart->sum('price'),0,',','.') }}</span>
+                <span>₲{{ number_format($total, 0, ',', '.') }}</span>
             </div>
 
             <form action="{{ route('pos.checkout') }}" method="POST">
