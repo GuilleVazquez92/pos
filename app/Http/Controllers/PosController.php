@@ -104,66 +104,127 @@ class PosController extends Controller
 
     public function checkout()
     {
-        $callNumber = session('call_number');
+        try {
+            $callNumber = session('call_number');
 
-        if (!$callNumber) {
-            return back()->with('error', 'No se encontró el número de llamada.');
-        }
+            // ✅ Validar número de llamada
+            if (!$callNumber) {
+                return back()->with('error', 'No se encontró el número de llamada.');
+            }
 
-        $cartItems = Cart::all();
+            // ✅ Obtener carrito
+            $cartItems = Cart::all();
 
-        if ($cartItems->isEmpty()) {
-            return back()->with('error', 'No hay productos en el carrito.');
-        }
+            if ($cartItems->isEmpty()) {
+                return back()->with('error', 'No hay productos en el carrito.');
+            }
 
-        // Calcular total (productos + extras)
-        $total = 0;
-        foreach ($cartItems as $item) {
-            $extras = json_decode($item->added, true) ?? [];
-            $extrasTotal = collect($extras)->sum('price');
-            $total += $item->price + $extrasTotal;
-        }
+            // ✅ Calcular total
+            $total = 0;
 
-        // Crear la orden
-        $order = Order::create([
-            'call_number' => $callNumber,
-            'total_price' => $total,
-            'status' => 'cobrado',
-        ]);
+            foreach ($cartItems as $item) {
 
-        // Crear los items de la orden
-        foreach ($cartItems as $item) {
-            $orderItem = $order->order_items()->create([
-                'product_id' => $item->product_id,
-                'quantity' => $item->quantity,
-                'price' => $item->price,
+                if (!isset($item->price)) {
+
+                    return back()->with('error', 'Un producto no tiene precio definido.');
+                }
+
+                $extras = json_decode($item->added, true) ?? [];
+                $extrasTotal = collect($extras)->sum('price');
+                $total += $item->price + $extrasTotal;
+            }
+
+            // ✅ Crear orden
+            $order = Order::create([
+                'call_number' => $callNumber,
+                'total_price' => $total,
+                'status' => 'cobrado',
             ]);
 
-            $added = json_decode($item->added, true) ?? [];
-            $removed = json_decode($item->removed, true) ?? [];
-
-            foreach ($added as $extra) {
-                $orderItem->addons()->create([
-                    'name' => $extra['name'],
-                    'price' => $extra['price'],
-                    'type' => 'extra'
-                ]);
+            if (!$order) {
+                return back()->with('error', 'No se pudo crear la orden.');
             }
 
-            foreach ($removed as $r) {
-                $orderItem->addons()->create([
-                    'name' => is_array($r) ? ($r['name'] ?? 'Sin nombre') : $r,
-                    'price' => 0,
-                    'type' => 'remove'
+            // ✅ Crear items
+            foreach ($cartItems as $item) {
+
+                if (!$item->product_id) {
+                    \Log::error('Carrito con producto sin ID:', ['item' => $item]);
+                    continue; // evita romper el proceso
+                }
+
+                $orderItem = $order->order_items()->create([
+                    'name' => $item->name ?? 'Sin nombre',
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity ?? 1,
+                    'price' => $item->price ?? 0,
                 ]);
+
+                if (!$orderItem) {
+                    \Log::error('No se pudo crear el item del pedido:', ['item' => $item]);
+                    continue;
+                }
+
+                // ✅ Crear addons
+                $added = json_decode($item->added, true) ?? [];
+                $removed = json_decode($item->removed, true) ?? [];
+
+
+                foreach ($added as $extra) {
+                    // Validar que sea un array y que tenga nombre y precio válidos
+                    if (
+                        !is_array($extra) ||
+                        empty($extra['name']) ||
+                        !isset($extra['price']) ||
+                        !is_numeric($extra['price'])
+                    ) {
+                        \Log::warning('Extra sin datos válidos, no se insertará:', ['extra' => $extra]);
+                        continue;
+                    }
+
+                    $orderItem->addons()->create([
+                        'name' => trim($extra['name']),
+                        'price' => (float) $extra['price'],
+                        'type' => 'extra',
+                    ]);
+                }
+
+                foreach ($removed as $r) {
+                    // Validar que no esté vacío
+                    if (empty($r)) {
+                        \Log::warning('Ingrediente removido vacío, se omite:', ['removed' => $r]);
+                        continue;
+                    }
+
+                    $name = is_array($r)
+                        ? (!empty($r['name']) ? trim($r['name']) : 'Sin nombre')
+                        : trim((string) $r);
+
+                    // Validar que haya un nombre válido
+                    if (empty($name)) {
+                        \Log::warning('Ingrediente removido sin nombre, se omite:', ['removed' => $r]);
+                        continue;
+                    }
+
+                    $orderItem->addons()->create([
+                        'name' => $name,
+                        'price' => 0,
+                        'type' => 'remove',
+                    ]);
+                }
             }
+
+            // ✅ Vaciar carrito
+            Cart::query()->delete();
+
+            return redirect()->route('pos.index')->with('success', 'Pedido cobrado y enviado a cocina.');
+        } catch (\Exception $e) {
+            dd($e);
+            \Log::error('Error en checkout:', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Ocurrió un error al procesar el pedido.');
         }
-
-        // Vaciar carrito
-        Cart::where('call_number', $callNumber)->delete();
-
-        return redirect()->route('pos.index')->with('success', 'Pedido cobrado y enviado a cocina.');
     }
+
 
 
     public function customize($callNumber, $productId)

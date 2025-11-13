@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Model;
  * 
  * @property Order $order
  * @property Product $product
+ * @property OrderAddon $order_addon
  *
  * @package App\Models
  */
@@ -59,4 +60,9 @@ class OrderItem extends Model
 	{
 		return $this->belongsTo(Product::class);
 	}
+
+	 public function addons()
+    {
+        return $this->hasMany(OrderAddon::class);
+    }
 }
